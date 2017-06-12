@@ -5,64 +5,66 @@
   extern int yyparse();
   extern FILE* yyin;
   void yyerror(const char* s);
+
+  int vari; 
 %}
 
-%union {
-  int ival;
-  char *sval;
-}
-
 %start Phrase
-%token<ival> integer
-%token<sval> variable
-%token T_REM T_GOTO T_LET T_PRINT T_INPUT T_IF T_THEN
-%token T_RUN T_LIST T_END
-%token T_UMINUS T_NOT
+%token T_INT
+%token T_VAR
+%token T_FLOAT
+%token T_REM T_GOTO T_LET T_DIM T_AS T_PRINT T_INPUT T_IF T_THEN
+%token T_RUN T_LIST T_QUIT
+%token T_NOT
 %token T_PLUS T_MINUS T_MULTI T_DIVIDE T_MOD
 %token T_EQUAL T_LEFT T_RIGHT T_LEFT_EQUAL T_RIGHT_EQUAL T_LEFT_RIGHT
 %token T_AND T_OR
+%token T_OP T_CP
+%token T_OS T_CS
+%token T_NEWLINE
 %left T_NOT
 %left T_AND T_OR
 %left T_EQUAL T_LEFT T_LEFT_EQUAL T_RIGHT T_RIGHT_EQUAL T_LEFT_RIGHT
 %left T_MOD
 %left T_PLUS T_MINUS
 %left T_MULTI T_DIVIDE
-%right T_EQUAL
 %left T_UMINUS
 %nonassoc NEG
 
 %%
 
-Phrase      : Program | T_RUN | T_LIST | T_END
+Phrase      : Program 
+            | T_RUN 
+            | T_LIST 
+            | T_QUIT
             ;
 Program     : Line '\n'
             | Line Program '\n'
-Line        : integer Command
+Line        : T_INT Command
             ;
-Command     : T_GOTO integer
-            | T_LET variable T_EQUAL Expression
+Command     : T_GOTO T_INT
+            | T_LET T_VAR T_EQUAL Expression
+            | T_LET T_VAR T_OS Expression T_CS T_EQUAL Expression
+            | T_DIM T_VAR T_AS T_OS Expression T_CS
             | T_PRINT Expression
-            | T_INPUT variable
-            | T_IF Expression T_THEN integer
+            | T_INPUT T_VAR
+            | T_IF Expression T_THEN T_INT
             ;
-Expression  : integer                               { $$ = $1; }
-            | variable                              { $$ = $1; }
-            | T_UMINUS Expression %prec NEG         { $$ = -$2; }
+Expression  : T_INT                                 { $$ = $1; }
+            | T_VAR                                 { $$ = (int) $1; }
+            | '-' Expression %prec NEG              { $$ = -$2; }
             | T_NOT Expression                      { $$ = !$2; }
             | Expression T_PLUS Expression          { $$ = $1 + $3; }
             | Expression T_MINUS Expression         { $$ = $1 - $3; }
             | Expression T_MULTI Expression         { $$ = $1 * $3; }
-            | Expression T_DIVIDE Expression        { $$ = $1 / (float)$3; }
-            | Expression T_PERCENT Expression       { $$ = $1 % $3; }
-            | Expression T_EQUAL Expression         { $$ = $1 == $2; }
-            | Expression T_LEFT Expression         
-            | Expression T_RIGHT Expression
-            | Expression T_LEFT_EQUAL Expression
-            | Expression T_RIGHT_EQUAL Expression
-            | Expression T_LEFT_RIGHT Expression
-            | Expression T_AND Expression
-            | Expression T_OR Expression
-            | '(' Expression ')'
+            | Expression T_MOD Expression           { $$ = $1 % $3; }
+            | Expression T_EQUAL Expression         { $$ = $1 == $3; }
+            | Expression T_LEFT Expression          { $$ = $1 < $3; }
+            | Expression T_RIGHT Expression         { $$ = $1 > $3; }
+            | Expression T_LEFT_EQUAL Expression    { $$ = $1 <= $3; }
+            | Expression T_RIGHT_EQUAL Expression   { $$ = $1 >= $3; }
+            | Expression T_LEFT_RIGHT Expression    { $$ = $1 != $3; }
+            | T_OP Expression T_CP                  { $$ = $2; }
             ;
 
 %%

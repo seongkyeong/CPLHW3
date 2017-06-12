@@ -1,5 +1,5 @@
 
-ption noyywrap
+%option noyywrap
 %{
 #include <stdio.h>
 #define YY_DECL int yylex()
@@ -7,13 +7,13 @@ ption noyywrap
 %}
 %%
 [ \t]	; // ignore all whitespace
-[alpha]+ 	{yylval.sval = yytext; return variable;}
-[0-9]+		{yylval.ival = atoi(yytext); return integer;}
-\n		{return T_NEWLINE;}
+\n		        {return T_NEWLINE;}
 
 "REM"		{return T_REM;}
 "GOTO"		{return T_GOTO;}
 "LET"		{return T_LET;}
+"DIM"           {return T_DIM;}
+"AS"            {return T_AS;}
 "PRINT"		{return T_PRINT;}
 "INPUT"	{return T_INPUT;}
 "IF"		{return T_IF;}
@@ -21,7 +21,10 @@ ption noyywrap
 
 "RUN"		{return T_RUN;}
 "LIST"		{return T_LIST;}
-"QUIT"		{return T_END;}
+"QUIT"		{return T_QUIT;}
+
+[0-9]+		        {return T_INT;}
+[a-zA-Z][a-zA-Z0-9]+ 	{return T_VAR;}
 
 "!"		{return T_NOT;}
 
@@ -40,6 +43,12 @@ ption noyywrap
 
 "&"		{return T_AND;}
 "|"		{return T_OR;}
+
+"("             {return T_OP;}
+")"             {return T_CP;}
+
+"["             {return T_OS;}
+"]"             {return T_CS;}
 %%
 
 
