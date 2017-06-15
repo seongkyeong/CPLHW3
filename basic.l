@@ -5,9 +5,13 @@
 #define YY_DECL int yylex()
 #include "basic.tab.h"
 %}
+
+StringLiteral "\""{StringCharacters}?"\""
+StringCharacters {StringCharacter}+
+StringCharacter [^\"\\]|{EscapeSequence}
+EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
+
 %%
-[ \t]	; // ignore all whitespace
-\n		        {return T_NEWLINE;}
 
 "REM"		{return T_REM;}
 "GOTO"		{return T_GOTO;}
@@ -49,6 +53,11 @@
 
 "["             {return T_OS;}
 "]"             {return T_CS;}
+
+{StringLiteral} {return T_STRING;}
+[ \t]	; // ignore all whitespace
+\n		{return T_NEWLINE;}
+.       ;
 %%
 
 

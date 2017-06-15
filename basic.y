@@ -1,18 +1,63 @@
 %{
   #include <stdio.h>
   #include <stdlib.h>
+  #include <string.h>
   extern int yylex();
   extern int yyparse();
   extern FILE* yyin;
   void yyerror(const char* s);
+  typedef enum { type_rem, type_goto, type_let, type_dim,  type_print, type_input, type_if } type;
 
-  int vari; 
+  typedef struct{
+    char name[1000];
+    int value;
+    int dim;
+  } var;
+
+  typedef struct{
+    int next;
+  } gt;
+
+  typedef struct{
+    char str[1000];
+    type t;
+    int line;
+  } triple;
+
+  triple codes[10000];    
+  int total_idx = 0;
+
+  void sort(){
+    triple temp;
+    for(int i=0; i<total_idx-1; i++){
+      for(int j=0; j<total_idx-i-1; j++){
+        if( codes[j].line > codes[j+1].line ){
+          memcpy(&temp, &codes[j+1], sizeof(node));
+          memcpy(&codes[j+1], &codes[j], sizeof(node));
+          memcpy(&codes[j], &temp, sizeof(node));
+        }
+      } 
+    }
+  }
+
+  void run(){
+  }
+  
+  void list(){
+    sort();
+    for(int i=0; i<total_idx; i++){
+      printf("%s\n", codes[i].str);
+    }  
+  }
+
+  void quit(){
+    printf("Bye...\n");
+    exit(0);
+  }
 %}
 
 %start Phrase
-%token T_INT
-%token T_VAR
-%token T_FLOAT
+%token T_INT T_VAR T_STRING
 %token T_REM T_GOTO T_LET T_DIM T_AS T_PRINT T_INPUT T_IF T_THEN
 %token T_RUN T_LIST T_QUIT
 %token T_NOT
@@ -34,21 +79,25 @@
 %%
 
 Phrase      : Program 
-            | T_RUN 
-            | T_LIST 
-            | T_QUIT
+            | T_RUN       { run(); } 
+            | T_LIST      { list(); }
+            | T_QUIT      { quit(); }
             ;
 Program     : Line '\n'
             | Line Program '\n'
-Line        : T_INT Command
+Line        : T_INT Command         { 
+                codes[total_idx].line = $1;
+                strcpy(codes[total_idx].str, yytext);
+                total_idx++; 
+              } 
             ;
-Command     : T_GOTO T_INT
-            | T_LET T_VAR T_EQUAL Expression
-            | T_LET T_VAR T_OS Expression T_CS T_EQUAL Expression
-            | T_DIM T_VAR T_AS T_OS Expression T_CS
-            | T_PRINT Expression
-            | T_INPUT T_VAR
-            | T_IF Expression T_THEN T_INT
+Command     : T_GOTO T_INT                                        {codes[total_idx].type = type_go;}
+            | T_LET T_VAR T_EQUAL Expression                      {codes[total_idx].type = type_let;}
+            | T_LET T_VAR T_OS Expression T_CS T_EQUAL Expression {codes[total_idx].type = type_let;}
+            | T_DIM T_VAR T_AS T_OS Expression T_CS               {codes[total_idx].type = type_dim;}
+            | T_PRINT Expression                                  {codes[total_idx].type = type_print;}
+            | T_INPUT T_VAR                                       {codes[total_idx].type = type_input;}
+            | T_IF Expression T_THEN T_INT                        {codes[total_idx].type = type_if;}
             ;
 Expression  : T_INT                                 { $$ = $1; }
             | T_VAR                                 { $$ = (int) $1; }
