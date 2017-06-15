@@ -2,19 +2,19 @@
 %option nounput
 %option noinput
 %{
-#include <stdio.h>
-#define YY_DECL int yylex()
-#include "basic.tab.h"
+  #include <stdio.h>
+  #define YY_DECL int yylex()
+  #include "basic.tab.h"
+  extern int yylval;
 %}
 
 StringLiteral "\""{StringCharacters}?"\""
 StringCharacters {StringCharacter}+
-StringCharacter [^\"\\]|{EscapeSequence}
-EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
+StringCharacter [^\"\\\n\t]
 
 %%
 
-"REM"		{return T_REM;}
+"REM"[^\n]*	{return T_REM;}
 "GOTO"		{return T_GOTO;}
 "LET"		{return T_LET;}
 "DIM"           {return T_DIM;}
@@ -24,12 +24,12 @@ EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
 "IF"		{return T_IF;}
 "THEN"		{return T_THEN;}
 
-"RUN\n"		{return T_RUN;}
-"LIST\n"	{return T_LIST;}
-"QUIT\n"	{return T_QUIT;}
+"RUN"		{return T_RUN;}
+"LIST"  	{printf("TEst");return T_LIST;}
+"QUIT"	        {return T_QUIT;}
 
-[0-9]+		        {return T_INT;}
-[a-zA-Z][a-zA-Z0-9]+ 	{return T_VAR;}
+[0-9]+		{yylval = atoi(yytext); return T_INT;}
+[[:alnum:]_]+ 	{return T_VAR;}
 
 "!"		{return T_NOT;}
 "+"		{return T_PLUS;}
@@ -54,9 +54,8 @@ EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
 "["             {return T_OS;}
 "]"             {return T_CS;}
 
-{StringLiteral} {return T_STRING;}
-[ \t]	; // ignore all whitespace
-\n		{return T_NEWLINE;}
+{StringLiteral}    {return T_STRING;}
+[\n\t]             {return T_NEWLINE;}
 .       ;
 %%
 
