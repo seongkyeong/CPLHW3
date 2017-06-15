@@ -19,7 +19,7 @@ EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
 "DIM"           {return T_DIM;}
 "AS"            {return T_AS;}
 "PRINT"		{return T_PRINT;}
-"INPUT"	{return T_INPUT;}
+"INPUT"		{return T_INPUT;}
 "IF"		{return T_IF;}
 "THEN"		{return T_THEN;}
 
@@ -31,7 +31,6 @@ EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
 [a-zA-Z][a-zA-Z0-9]+ 	{return T_VAR;}
 
 "!"		{return T_NOT;}
-
 "+"		{return T_PLUS;}
 "-"		{return T_MINUS;}
 "*"		{return T_MULTI;}
