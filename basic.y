@@ -5,7 +5,7 @@
   extern int yyparse();
   extern FILE* yyin;
   void yyerror(const char* s);
-
+  
   int vari; 
 %}
 
@@ -70,6 +70,20 @@ Expression  : T_INT                                 { $$ = $1; }
 %%
 
 int main() {
+
+FILE *fp = fopen("src.txt","r");
+if(fp == NULL) exit(EXIT_FAILURE);
+ssize_t read;
+
+while((yyin = getline(&line,&len,fp))!= -1){
+	int a = yyparse();
+	if(a ==0)break;
+}
+free(yyin);
+
+char * line = NULL;
+size_t len=0;
+
   yyin = stdin;
   do { 
     yyparse();
