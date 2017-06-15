@@ -1,7 +1,9 @@
 %{
+  #include <ctype.h>
   #include <stdio.h>
   #include <stdlib.h>
   #include <string.h>
+
   extern int yylex();
   extern int yyparse();
   extern FILE* yyin;
@@ -29,13 +31,14 @@
   int total_idx = 0;
 
   void sort(){
+    int i=0, j=0;
     triple temp;
-    for(int i=0; i<total_idx-1; i++){
-      for(int j=0; j<total_idx-i-1; j++){
+    for(i=0; i<total_idx-1; i++){
+      for(j=0; j<total_idx-i-1; j++){
         if( codes[j].line > codes[j+1].line ){
-          memcpy(&temp, &codes[j+1], sizeof(node));
-          memcpy(&codes[j+1], &codes[j], sizeof(node));
-          memcpy(&codes[j], &temp, sizeof(node));
+          memcpy(&temp, &codes[j+1], sizeof(triple));
+          memcpy(&codes[j+1], &codes[j], sizeof(triple));
+          memcpy(&codes[j], &temp, sizeof(triple));
         }
       } 
     }
@@ -45,9 +48,10 @@
   }
   
   void list(){
+    int i=0;
     sort();
-    for(int i=0; i<total_idx; i++){
-      printf("%s\n", codes[i].str);
+    for(i=0; i<total_idx; i++){
+      printf("%s", codes[i].str);
     }  
   }
 
@@ -88,17 +92,16 @@ Program     : Line '\n'
             | Line Program '\n'
 Line        : T_INT Command         { 
                 codes[total_idx].line = $1;
-                strcpy(codes[total_idx].str, yytext);
                 total_idx++; 
               } 
             ;
-Command     : T_GOTO T_INT                                        {codes[total_idx].type = type_go;}
-            | T_LET T_VAR T_EQUAL Expression                      {codes[total_idx].type = type_let;}
-            | T_LET T_VAR T_OS Expression T_CS T_EQUAL Expression {codes[total_idx].type = type_let;}
-            | T_DIM T_VAR T_AS T_OS Expression T_CS               {codes[total_idx].type = type_dim;}
-            | T_PRINT Expression                                  {codes[total_idx].type = type_print;}
-            | T_INPUT T_VAR                                       {codes[total_idx].type = type_input;}
-            | T_IF Expression T_THEN T_INT                        {codes[total_idx].type = type_if;}
+Command     : T_GOTO T_INT                                        {codes[total_idx].t = type_goto;}
+            | T_LET T_VAR T_EQUAL Expression                      {codes[total_idx].t = type_let;}
+            | T_LET T_VAR T_OS Expression T_CS T_EQUAL Expression {codes[total_idx].t = type_let;}
+            | T_DIM T_VAR T_AS T_OS Expression T_CS               {codes[total_idx].t = type_dim;}
+            | T_PRINT Expression                                  {codes[total_idx].t = type_print;}
+            | T_INPUT T_VAR                                       {codes[total_idx].t = type_input;}
+            | T_IF Expression T_THEN T_INT                        {codes[total_idx].t = type_if;}
             ;
 Expression  : T_INT                                 { $$ = $1; }
             | T_VAR                                 { $$ = (int) $1; }
@@ -119,20 +122,15 @@ Expression  : T_INT                                 { $$ = $1; }
 
 %%
 
-int main() {
-
-  FILE *fp = fopen("src.txt","r");
+int main(int argc, char *argv[]) {
+  FILE *fp = fopen("src.txt", "r");
   if(fp == NULL) exit(EXIT_FAILURE);
-  ssize_t read;
 
-  while((yyin = getline(&line,&len,fp))!= -1){
-          int a = yyparse();
-          if(a ==0)break;
+  while(!feof(fp)){
+    //fscanf(fp, "%s\n", codes[total_idx].str);
+    fgets(codes[total_idx].str, 1000, fp);
+    total_idx++;
   }
-  free(yyin);
-
-  char * line = NULL;
-  size_t len=0;
 
   yyin = stdin;
   do { 

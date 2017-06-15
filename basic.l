@@ -1,5 +1,6 @@
-
 %option noyywrap
+%option nounput
+%option noinput
 %{
 #include <stdio.h>
 #define YY_DECL int yylex()
@@ -23,9 +24,9 @@ EscapeSequence \\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\
 "IF"		{return T_IF;}
 "THEN"		{return T_THEN;}
 
-"RUN"		{return T_RUN;}
-"LIST"		{return T_LIST;}
-"QUIT"		{return T_QUIT;}
+"RUN\n"		{return T_RUN;}
+"LIST\n"	{return T_LIST;}
+"QUIT\n"	{return T_QUIT;}
 
 [0-9]+		        {return T_INT;}
 [a-zA-Z][a-zA-Z0-9]+ 	{return T_VAR;}
