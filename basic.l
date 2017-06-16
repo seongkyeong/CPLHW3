@@ -36,6 +36,7 @@ StringCharacter [^\"\\\n\t]
 
 "!"		{return T_NOT;}
 "+"		{return T_PLUS;}
+"-"             {return *yytext;}
 "*"		{return T_MULTI;}
 "/"		{return T_DIVIDE;}
 "%"		{return T_MOD;}

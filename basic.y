@@ -145,7 +145,7 @@
           right = traval(tree->right);
           if ((left >= 0 && right >= 0 && left + right < 0) ||
               (left <= 0 && right <= 0 && left + right > 0)) {
-            fprintf(stderr, "Integer Overflow error \n");
+            fprintf(stderr, "Integer Overflow error %d + %d\n", left, right);
             exit(1);
           }
           return left + right;
@@ -156,7 +156,7 @@
           right = traval(tree->right);
           if ((left >= 0 && right <= 0 && left - right < 0) ||
               (left <= 0 && right >= 0 && left - right > 0)) {
-            fprintf(stderr, "Integer Overflow error \n");
+            fprintf(stderr, "Integer Overflow error %d - %d\n", left, right);
             exit(1);
           }
           return left - right;
@@ -166,7 +166,7 @@
           left = traval(tree->left);
           right = traval(tree->right);
           if (right != 0 && left > INT_MAX / right) {
-            fprintf(stderr, "Integer Overflow error \n");
+            fprintf(stderr, "Integer Overflow error %d * %d\n", left, right);
             exit(1);
           }
           return traval(tree->left) * traval(tree->right);
@@ -400,7 +400,7 @@
 %token T_REM T_GOTO T_LET T_DIM T_AS T_PRINT T_INPUT T_IF T_THEN T_WHILE T_EXIT
 %token T_RUN T_LIST T_QUIT
 %token T_NOT
-%token T_PLUS T_MINUS T_MULTI T_DIVIDE T_MOD
+%token T_PLUS T_MULTI T_DIVIDE T_MOD
 %token T_EQUAL T_LEFT T_RIGHT T_LEFT_EQUAL T_RIGHT_EQUAL T_LEFT_RIGHT
 %token T_AND T_OR
 %token T_OP T_CP
