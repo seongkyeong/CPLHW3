@@ -1,0 +1,7 @@
+5 LET A = 1
+7 LET B = 1
+10 WHILE A < 10 EXIT 30
+15 LET A = A + 1
+20 IF B < 5 THEN 25
+25 PRINT A * B
+30 PRINT "while end"
