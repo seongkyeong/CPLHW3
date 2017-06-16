@@ -5,7 +5,8 @@
   #include <stdio.h>
   #define YY_DECL int yylex()
   #include "basic.tab.h"
-  extern int yylval;
+
+ //extern int yylval;
 %}
 
 StringLiteral "\""{StringCharacters}?"\""
@@ -28,8 +29,8 @@ StringCharacter [^\"\\\n\t]
 "LIST"  	{printf("TEst");return T_LIST;}
 "QUIT"	        {return T_QUIT;}
 
-[0-9]+		{yylval = atoi(yytext); return T_INT;}
-[[:alnum:]_]+ 	{return T_VAR;}
+[0-9]+		{yylval.integer = atoi(yytext); return T_INT;}
+[[:alnum:]_]+ 	{yylval.string = strdup(yytext); return T_VAR;}
 
 "!"		{return T_NOT;}
 "+"		{return T_PLUS;}
@@ -54,7 +55,7 @@ StringCharacter [^\"\\\n\t]
 "["             {return T_OS;}
 "]"             {return T_CS;}
 
-{StringLiteral}    {return T_STRING;}
+{StringLiteral}    {yylval.string = strdup(yytext); return T_STRING;}
 [\n\t]             {return T_NEWLINE;}
 .       ;
 %%
