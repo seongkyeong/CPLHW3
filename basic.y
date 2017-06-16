@@ -165,7 +165,10 @@
         case op_multi       : {
           left = traval(tree->left);
           right = traval(tree->right);
-          if (right != 0 && left > INT_MAX / right) {
+          if ((left > 0 && right > 0 && left * right < 0) ||
+              (left < 0 && right < 0 && left * right < 0) ||
+              (left > 0 && right < 0 && left * right > 0) ||
+              (left < 0 && right > 0 && left * right > 0) ){
             fprintf(stderr, "Integer Overflow error %d * %d\n", left, right);
             exit(1);
           }
