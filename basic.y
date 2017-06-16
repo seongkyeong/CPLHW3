@@ -17,7 +17,7 @@
   extern FILE* yyin;
   void yyerror(char* const s);
 
-  typedef enum { type_rem, type_goto, type_let, type_let_dim, type_dim, type_print, type_input, type_if } type;
+  typedef enum { type_rem, type_goto, type_let, type_let_dim, type_dim, type_print, type_input, type_if, type_while } type;
   typedef enum { op_uminus, op_not, op_plus, op_minus, op_multi, op_divide, op_mod, op_equal, op_left, op_right, op_left_equal, op_right_equal, op_left_right } op_type;
   typedef enum { ast_int, ast_var, ast_op } ast_type;
 
@@ -66,6 +66,11 @@
     ast_node *node;
     int next;
   } if_node;
+  
+  typedef struct{
+    ast_node *node;
+    int end; 
+  } while_node;
 
   typedef struct{
     char str[MAX_CODE_LENGTH];
@@ -78,6 +83,7 @@
     dim_node dn;
     input_node in;
     if_node ifn;
+    while_node wn;
   } triple;
 
   
@@ -274,6 +280,12 @@
         }
         return INT_MAX;
         break;
+      case type_while:
+        if( traval(L.wn.node) ){
+          return INT_MAX;
+        }
+        return L.wn.end;
+        break;
     }
     return 0;
   }
@@ -330,6 +342,12 @@
     codes[idx].ifn.next = next;
   }
 
+  void whilenode(int idx, ast_node *node, int end){
+    codes[idx].t = type_while;
+    codes[idx].wn.node = node;
+    codes[idx].wn.end = end;
+  }
+
   void list(){
     int i=0;
     sort();
@@ -372,7 +390,7 @@
 %token <string> T_VAR T_STRING
 %type <ast> Expression
 %token T_STRING_LITERAL
-%token T_REM T_GOTO T_LET T_DIM T_AS T_PRINT T_INPUT T_IF T_THEN
+%token T_REM T_GOTO T_LET T_DIM T_AS T_PRINT T_INPUT T_IF T_THEN T_WHILE T_EXIT
 %token T_RUN T_LIST T_QUIT
 %token T_NOT
 %token T_PLUS T_MINUS T_MULTI T_DIVIDE T_MOD
@@ -410,6 +428,7 @@ Command     : T_GOTO T_INT                                        {codes[total_i
             | T_PRINT T_STRING                                    {codes[total_idx].t = type_print; strcpy(codes[total_idx].pn.str, $2);}
             | T_INPUT T_VAR                                       {codes[total_idx].t = type_input; input(total_idx, $2);}
             | T_IF Expression T_THEN T_INT                        {codes[total_idx].t = type_if; ifnode(total_idx, $2, $4);}
+            | T_WHILE Expression T_EXIT T_INT                       {codes[total_idx].t = type_while; whilenode(total_idx, $2, $4);} 
             | T_REM                                               {}
             ;
 Expression  : T_INT                                 { $$ = new_ast_node(ast_int, -1, NULL, NULL, $1, NULL); }
@@ -436,7 +455,7 @@ Expression  : T_INT                                 { $$ = new_ast_node(ast_int,
 int main(int argc, char *argv[]) {
   FILE *fp;
   char command[5];
-  int i=0, j=0, next = 0;
+  int i=0, j=0, next = 0, is_while = 0, while_end = 0, while_idx = 0;
 
   if( argc < 2 ){
     fprintf(stderr, "Useage : ./basic <Basic File Name>\n");
@@ -469,17 +488,30 @@ int main(int argc, char *argv[]) {
       i = 0;
       while(1){
         if( i == total_idx ) break;
+        if( codes[i].t == type_while ){
+          is_while = 1;
+          while_end = codes[i].wn.end;
+          while_idx = i;
+        }
         next = execute(codes[i]);
-        if( next == 0 ) {
+        if( next <= 0 ) {
           break;
         } else if( next == INT_MAX ) {
           i++;
+          if( is_while == 1 && codes[i].line >= while_end ){
+            i = while_idx;
+          }
         } else {
           for(j=0; j<total_idx; j++){
             if(codes[j].line == next){
               i = j;
               break;
             }
+          }
+          if( codes[i].line >= while_end ){
+            is_while = 0;
+            while_end = 0;
+            while_idx = 0;
           }
         }
       }

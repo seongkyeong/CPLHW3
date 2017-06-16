@@ -24,6 +24,8 @@ StringCharacter [^\"\\\n\t]
 "INPUT"		{return T_INPUT;}
 "IF"		{return T_IF;}
 "THEN"		{return T_THEN;}
+"WHILE"         {return T_WHILE;}
+"EXIT"            {return T_EXIT;}
 
 "RUN"		{return T_RUN;}
 "LIST"  	{printf("TEst");return T_LIST;}
