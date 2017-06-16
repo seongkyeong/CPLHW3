@@ -115,7 +115,7 @@
   }
 
   int traval(ast_node *tree){
-    int left=0, right=0, temp=0;
+    int left=0, right=0, temp=0, value=0;
     
     if( tree->at == ast_int ) {
       return tree->value;
@@ -123,7 +123,12 @@
       temp=check_variable_name(tree->variable.name);
       if( temp > -1 ){
         if( table[temp].size > 0 ){
-          return table[temp].value[traval(tree->variable.node)];
+          value = traval(tree->variable.node);
+          if( value >= table[temp].size ){
+            fprintf(stderr, "Array out of index : %s, size: %d, index : %d\n", table[temp].name, table[temp].size, value);
+            exit(1);
+          }
+          return table[temp].value[value];
         } else {
           return table[temp].value[0];
         }
@@ -138,7 +143,8 @@
         case op_plus        : {
           left = traval(tree->left);
           right = traval(tree->right);
-          if ((right < 0) && (left > INT_MAX - right)) {
+          if ((left >= 0 && right >= 0 && left + right < 0) ||
+              (left <= 0 && right <= 0 && left + right > 0)) {
             fprintf(stderr, "Integer Overflow error \n");
             exit(1);
           }
@@ -148,7 +154,8 @@
         case op_minus       : {
           left = traval(tree->left);
           right = traval(tree->right);
-          if ((right < 0) && (left > INT_MAX + right)) {
+          if ((left >= 0 && right <= 0 && left - right < 0) ||
+              (left <= 0 && right >= 0 && left - right > 0)) {
             fprintf(stderr, "Integer Overflow error \n");
             exit(1);
           }
@@ -403,9 +410,8 @@
 %left T_AND T_OR
 %left T_EQUAL T_LEFT T_LEFT_EQUAL T_RIGHT T_RIGHT_EQUAL T_LEFT_RIGHT
 %left T_MOD
-%left T_PLUS T_MINUS
+%left T_PLUS '-'
 %left T_MULTI T_DIVIDE
-%left T_UMINUS
 %nonassoc NEG
 
 %%
@@ -437,7 +443,7 @@ Expression  : T_INT                                 { $$ = new_ast_node(ast_int,
             | '-' Expression %prec NEG              { $$ = new_ast_node(ast_op, op_uminus, $2, NULL, -1, NULL); }
             | T_NOT Expression                      { $$ = new_ast_node(ast_op, op_not, $2, NULL, -1, NULL); }
             | Expression T_PLUS Expression          { $$ = new_ast_node(ast_op, op_plus, $1, $3, -1, NULL); }
-            | Expression T_MINUS Expression         { $$ = new_ast_node(ast_op, op_minus, $1, $3, -1, NULL); }
+            | Expression '-' Expression             { $$ = new_ast_node(ast_op, op_minus, $1, $3, -1, NULL); }
             | Expression T_MULTI Expression         { $$ = new_ast_node(ast_op, op_multi, $1, $3, -1, NULL); }
             | Expression T_DIVIDE Expression        { $$ = new_ast_node(ast_op, op_divide, $1, $3, -1, NULL); }
             | Expression T_MOD Expression           { $$ = new_ast_node(ast_op, op_mod, $1, $3, -1, NULL); }
