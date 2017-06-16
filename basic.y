@@ -480,7 +480,6 @@ int main(int argc, char *argv[]) {
 
   do{
     scanf("%s", command);
-    printf("%s\n", command);
     if( strcmp(command, "LIST") == 0 ){
       list();
     }
