@@ -23,7 +23,9 @@
 
   typedef struct{
     char name[MAX_VAR_NAME];
-    int value;
+    int *value;
+    int size;
+    struct ast_node *node;
   } var;
 
   typedef struct ast_node{
@@ -114,7 +116,11 @@
     } else if( tree->at == ast_var ) {
       temp=check_variable_name(tree->variable.name);
       if( temp > -1 ){
-        return table[temp].value;
+        if( table[temp].size > 0 ){
+          return table[temp].value[traval(tree->variable.node)];
+        } else {
+          return table[temp].value[0];
+        }
       } else {
         fprintf(stderr, "No declaration variable : %s\n", tree->variable.name); 
         exit(1);
@@ -184,8 +190,11 @@
   }
 
   int execute(triple L){
+    int i=0;
     int temp=0;
     int input = 0;
+    int array_idx = -1;
+    int array_size = 0;
     switch(L.t){
       case type_rem: 
         return INT_MAX;
@@ -198,13 +207,46 @@
           strcpy(table[var_idx].name, L.ln.name);
           temp = var_idx;
           var_idx++;
+          table[temp].value = (int *) malloc(sizeof(int));
         }
-        table[temp].value = traval(L.ln.node1);
+        table[temp].value[0] = traval(L.ln.node1);
+        table[temp].size = 0;
         return INT_MAX;
         break;
       case type_let_dim:
+        if( (temp=check_variable_name(L.ln.name)) == -1 ){
+          fprintf(stderr, "Undefined array variable : %s\n", L.ln.name);
+          exit(1);
+          return -1;
+        }
+        array_idx = traval(L.ln.node2);
+        if( table[temp].size <= array_idx || 0 > array_idx){
+          fprintf(stderr, "Array out of index : %s, size: %d, index : %d\n", L.ln.name, table[temp].size, array_idx);
+          exit(1);
+          return -1;
+        }
+        table[temp].value[array_idx] = traval(L.ln.node1);
+        return INT_MAX;
         break;
       case type_dim:
+        array_size = traval(L.dn.node);
+        if( array_size < 1 ){
+          fprintf(stderr, "Array size more than 1\n");
+          exit(1);
+          return -1;
+        }
+        if( (temp=check_variable_name(L.dn.name)) == -1 ){
+          strcpy(table[var_idx].name, L.dn.name);
+          temp = var_idx;
+          var_idx++;
+        }
+        table[temp].value = (int *) malloc(sizeof(int) * array_size);
+        table[temp].size = array_size;
+        for(i=0; i<array_size; i++){
+          table[temp].value[i] = 0;
+        }
+        
+        return INT_MAX;
         break;
       case type_print:
         if( L.pn.node == NULL ){
@@ -220,8 +262,10 @@
           strcpy(table[var_idx].name, L.in.name);
           temp = var_idx;
           var_idx++;
+          table[temp].value = (int *) malloc(sizeof(int));
         }
-        table[temp].value = input; 
+        table[temp].value[0] = input; 
+        table[temp].size = 0;
         return INT_MAX;
         break;
       case type_if:
@@ -243,6 +287,7 @@
         break;
       case ast_var :
         strcpy(new_node->variable.name, name);
+        new_node->variable.node = left;
         break;
       case ast_op :
         new_node->ot = ot;
@@ -369,6 +414,7 @@ Command     : T_GOTO T_INT                                        {codes[total_i
             ;
 Expression  : T_INT                                 { $$ = new_ast_node(ast_int, -1, NULL, NULL, $1, NULL); }
             | T_VAR                                 { $$ = new_ast_node(ast_var, -1, NULL, NULL, -1, $1); }
+            | T_VAR T_OS Expression T_CS            { $$ = new_ast_node(ast_var, -1, $3, NULL, -1, $1); }
             | '-' Expression %prec NEG              { $$ = new_ast_node(ast_op, op_uminus, $2, NULL, -1, NULL); }
             | T_NOT Expression                      { $$ = new_ast_node(ast_op, op_not, $2, NULL, -1, NULL); }
             | Expression T_PLUS Expression          { $$ = new_ast_node(ast_op, op_plus, $1, $3, -1, NULL); }
@@ -388,9 +434,15 @@ Expression  : T_INT                                 { $$ = new_ast_node(ast_int,
 %%
 
 int main(int argc, char *argv[]) {
-  FILE *fp = fopen("src.txt", "r");
+  FILE *fp;
   char command[5];
   int i=0, j=0, next = 0;
+
+  if( argc < 2 ){
+    fprintf(stderr, "Useage : ./basic <Basic File Name>\n");
+    exit(1);
+  }
+  fp = fopen(argv[1], "r");
   if(fp == NULL) exit(EXIT_FAILURE);
 
   while(!feof(fp)){
@@ -400,7 +452,7 @@ int main(int argc, char *argv[]) {
   fclose(fp);
 
   total_idx = 0;
-  yyin = fopen("src.txt", "r");
+  yyin = fopen(argv[1], "r");
 
   while(!feof(yyin)){
     yyparse();
@@ -409,6 +461,7 @@ int main(int argc, char *argv[]) {
 
   do{
     scanf("%s", command);
+    printf("%s\n", command);
     if( strcmp(command, "LIST") == 0 ){
       list();
     }
