@@ -1,0 +1,3 @@
+5 LET A = 1
+10 IF A = 1 THEN 20
+15 PRINT A

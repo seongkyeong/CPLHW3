@@ -175,7 +175,7 @@
         case op_divide      : {
           right = traval(tree->right);
           if( right == 0 ){
-            fprintf(stderr, "Integer Overflow error \n");
+            fprintf(stderr, "Fault Error : Divide by zero\n");
             exit(1);
           }
           return traval(tree->left) / right;
@@ -512,6 +512,10 @@ int main(int argc, char *argv[]) {
               i = j;
               break;
             }
+          }
+          if( j == total_idx ){
+            fprintf(stderr, "Referencing undefined line number %d\n", next);
+            exit(1);
           }
           if( codes[i].line >= while_end ){
             is_while = 0;
